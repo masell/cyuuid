@@ -8,26 +8,103 @@ RESERVED_FUTURE = 'reserved for future definition'
 cdef extern from "header_int128.h":
     ctypedef unsigned long long int128
 
+
 from uuid import UUID as _UUID
+
+cdef dict params = {'hex':None, 'bytes': None, 'bytes_le': None, 'fields': None, 'int': None, 'version':None, 'uuid': None}
 
 cdef class UUID:
     cdef int128 value
 
-    def __cinit__(self, value not None):
-        if isinstance(value, _UUID):
-            self.value = int(value)
-        elif isinstance(value, int):
-            self.value = value
-        elif isinstance(value, bytes):
-            self.value = int.from_bytes(value, 'big')
-        elif isinstance(value, str):
-            value = value.replace('urn:', '').replace('uuid:', '')
-            value = value.strip('{}').replace('-', '')
-            if len(value) != 32:
-                raise ValueError('badly formed hexadecimal UUID string')
-            self.value = int(value, 16)
-        else:
-            raise TypeError("Value must be int, byte, str or UUID")
+    def __cinit__(self, hex=None, **params):
+        cdef dict data = {}
+        data.setdefault('hex', hex)
+        data.setdefault('bytes', None)
+        data.setdefault('bytes_le', None)
+        data.setdefault('fields', None)
+        data.setdefault('int', None)
+        data.setdefault('version', None)
+        data.setdefault('uuid', None)
+        data.update(params)
+
+        (hex, _bytes, bytes_le, fields, _int, version, uuid) = data.values()
+
+        if [uuid, hex, _bytes, bytes_le, fields, _int].count(None) != 5:
+            raise TypeError('one of the hex, bytes, bytes_le, fields, or int arguments must be given')
+
+
+        if uuid is not None:
+            self._init_uuid(uuid)
+
+        if hex is not None:
+            self._init_hex(hex)
+
+        if _bytes is not None:
+            self._init_bytes(_bytes)
+
+        if bytes_le is not None:
+            self._init_bytes_le(bytes_le)
+
+        if fields is not None:
+            self._init_fields(fields)
+
+        if _int is not None:
+            self._init_int(_int)
+
+        if version is not None:
+            if not 1 <= version <= 5:
+                raise ValueError('illegal version number')
+            self.value &= ~(0xc000 << 48)
+            self.value |= 0x8000 << 48
+            self.value &= ~(0xf000 << 64)
+            self.value |= version << 76
+
+    cdef _init_fields(self, tuple fields):
+        if len(fields) != 6:
+            raise ValueError('fields is not a 6-tuple')
+        cdef int128 time_low = fields[0]
+        cdef int128 time_mid = fields[1]
+        cdef int128 time_hi_version = fields[2]
+        cdef int128 clock_seq_hi_variant = fields[3]
+        cdef int128 clock_seq_low= fields[4]
+        cdef int128 node = fields[5]
+
+        if not 0 <= time_low < 1<<32:
+            raise ValueError('field 1 out of range (need a 32-bit value)')
+        if not 0 <= time_mid < 1<<16:
+            raise ValueError('field 2 out of range (need a 16-bit value)')
+        if not 0 <= time_hi_version < 1<<16:
+            raise ValueError('field 3 out of range (need a 16-bit value)')
+        if not 0 <= clock_seq_hi_variant < 1<<8:
+            raise ValueError('field 4 out of range (need an 8-bit value)')
+        if not 0 <= clock_seq_low < 1<<8:
+            raise ValueError('field 5 out of range (need an 8-bit value)')
+        if not 0 <= node < 1<<48:
+            raise ValueError('field 6 out of range (need a 48-bit value)')
+        clock_seq = (clock_seq_hi_variant << 8) | clock_seq_low
+        self.value = ((time_low << 96) | (time_mid << 80) | (time_hi_version << 64) | (clock_seq << 48) | node)
+
+    cdef _init_bytes_le(self, bytes bytes_le):
+            cdef bytes _bytes = (bytes_le[4-1::-1] + bytes_le[6-1:4-1:-1] + bytes_le[8-1:6-1:-1] + bytes_le[8:])
+            self._init_bytes(_bytes)
+
+    cdef _init_bytes(self, bytes _bytes):
+        if len(_bytes) != 16:
+            raise ValueError('bytes is not a 16-char string')
+        self.value = int.from_bytes(_bytes, 'big')
+
+    cdef _init_hex(self, str hex):
+        hex= hex.replace('urn:', '').replace('uuid:', '')
+        hex = hex.strip('{}').replace('-', '')
+        if len(hex) != 32:
+            raise ValueError('badly formed hexadecimal UUID string')
+        self.value = int(hex, 16)
+
+    cdef _init_int(self, int128 _int):
+        self.value = _int
+
+    cdef _init_uuid(self, uuid):
+        self.value = int(uuid)
 
     def __int__(self):
         return self.value

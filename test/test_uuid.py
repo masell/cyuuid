@@ -8,23 +8,22 @@ class TestUUID(TestCase):
         self._uuid = _UUID("a8098c1a-f86e-11da-bd1a-00112444be1e")
 
     def test_from_uuid(self):
-        self.assertEqual(UUID(self._uuid), self._uuid)
+        self.assertEqual(UUID(uuid=self._uuid), self._uuid)
 
-    def test_from_uuid_not_equal(self):
+    def test_not_equal(self):
         self.assertNotEqual(UUID('b8098c1a-f86e-11da-bd1a-00112444be1e'), self._uuid)
 
-    def test_from_uuid_lt(self):
+    def test_lt(self):
         self.assertLess(UUID('a7098c1a-f86e-11da-bd1a-00112444be1e'), self._uuid)
 
-    def test_from_uuid_gt(self):
+    def test_gt(self):
         self.assertGreater(UUID('a9098c1a-f86e-11da-bd1a-00112444be1e'), self._uuid)
 
-    def test_from_uuid_lte(self):
+    def test_lte(self):
         self.assertLessEqual(UUID('a8098c1a-f86e-11da-bd1a-00112444be1e'), self._uuid)
         self.assertLessEqual(UUID('a7098c1a-f86e-11da-bd1a-00112444be1e'), self._uuid)
 
-
-    def test_from_uuid_gtw(self):
+    def test_gte(self):
         self.assertGreaterEqual(UUID('a8098c1a-f86e-11da-bd1a-00112444be1e'), self._uuid)
         self.assertGreaterEqual(UUID('a9098c1a-f86e-11da-bd1a-00112444be1e'), self._uuid)
 
@@ -39,7 +38,6 @@ class TestUUID(TestCase):
 
     def test_hex(self):
         self.assertEqual(UUID('a8098c1a-f86e-11da-bd1a-00112444be1e').hex, "a8098c1af86e11dabd1a00112444be1e")
-
 
     def test_variant_NSC(self):
         self.assertEqual(UUID('a8098c1a-f86e-11da-0d1a-00112444be1e').variant, RESERVED_NCS)
