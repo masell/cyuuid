@@ -1,4 +1,5 @@
 #distutils: language = c
+#cython: language_level = 3
 
 RESERVED_NCS = 'reserved for NCS compatibility'
 RFC_4122 = 'specified in RFC 4122'
