@@ -1,1 +1,2 @@
-include cyuuid/*.h
+include cyuuid/*.h cyuuid/*.pxd cyuuid/*.pyx
+exclude cyuuid/*.c

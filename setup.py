@@ -1,9 +1,13 @@
-from setuptools import setup, Extension
+from setuptools import setup, Extension, _install_setup_requires
 
 REQUIRES = [
     'setuptools>=18.0',
     'cython>=0.29'
 ]
+
+_install_setup_requires({'setup_requires':REQUIRES})
+
+from Cython.Build import cythonize
     
 setup(
     name='cyuuid',
@@ -16,13 +20,12 @@ setup(
     setup_requires=REQUIRES,
     license='PSF',
     url='https://github.com/masell/cyuuid/',
+    packages=['cyuuid', ],
+    ext_modules = cythonize(
+	Extension('cyuuid.*', sources=["cyuuid/*.pyx"])
+    ),
+    include_package_data=True,
     zip_safe=False,
-    ext_modules = [
-	Extension(
-	    'cyuuid',
-	    sources=['cyuuid/cyuuid.pyx']
-        )
-    ],
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: Python Software Foundation License',

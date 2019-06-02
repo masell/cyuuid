@@ -6,17 +6,11 @@ RFC_4122 = 'specified in RFC 4122'
 RESERVED_MICROSOFT = 'reserved for Microsoft compatibility'
 RESERVED_FUTURE = 'reserved for future definition'
 
-cdef extern from "header_int128.h":
-    ctypedef unsigned long long int128
-
-
 from uuid import UUID as _UUID
 
 cdef dict params = {'hex':None, 'bytes': None, 'bytes_le': None, 'fields': None, 'int': None, 'version':None, 'uuid': None}
 
 cdef class UUID:
-    cdef int128 value
-
     def __cinit__(self, hex=None, **params):
         cdef dict data = {}
         data.setdefault('hex', hex)
